@@ -11,7 +11,7 @@ defmodule Topology.Server do
 
   @impl true
   def init(_opts) do
-    {:ok, %{}}
+    {:ok, %{active_tasks: [], completed_tasks: []}}
   end
 
   @impl true
@@ -19,16 +19,34 @@ defmodule Topology.Server do
     nodes = Node.list()
     n = hd(nodes)
 
-    {Topology.TaskSupervisor, n}
-    |> Task.Supervisor.async_nolink(Topology.Worker, :run, [])
+    task =
+      {Topology.TaskSupervisor, n}
+      |> Task.Supervisor.async_nolink(Topology.Worker, :run, [])
 
-    {:reply, :ok, state}
+    {:reply, :ok, %{state | active_tasks: [task | state.active_tasks]}}
   end
 
   @impl true
-  def handle_info({_ref, {:job, msg}}, state) do
+  def handle_info({ref, {:job, msg}}, state) do
     IO.puts(msg)
-    {:noreply, state}
+
+    {matched_tasks, remaining_tasks} =
+      Enum.split_with(state.active_tasks, fn %Task{ref: task_ref} -> task_ref == ref end)
+
+    new_state =
+      case matched_tasks do
+        [completed_task] ->
+          %{
+            state
+            | active_tasks: remaining_tasks,
+              completed_tasks: [completed_task | state.completed_tasks]
+          }
+
+        [] ->
+          state
+      end
+
+    {:noreply, new_state}
   end
 
   @impl true
