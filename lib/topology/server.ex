@@ -9,6 +9,10 @@ defmodule Topology.Server do
     GenServer.call(__MODULE__, :job)
   end
 
+  def print_state do
+    GenServer.cast(___MODULE__, :print_state)
+  end
+
   @impl true
   def init(_opts) do
     {:ok, %{active_tasks: [], completed_tasks: []}}
@@ -24,6 +28,12 @@ defmodule Topology.Server do
       |> Task.Supervisor.async_nolink(Topology.Worker, :run, [])
 
     {:reply, :ok, %{state | active_tasks: [task | state.active_tasks]}}
+  end
+
+  @impl true
+  def handle_cast(:print_state, _from, state) do
+    IO.inspect(state)
+    {:noreply, state}
   end
 
   @impl true
