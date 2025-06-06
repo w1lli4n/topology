@@ -10,7 +10,7 @@ defmodule Topology.Server do
   end
 
   def print_state do
-    GenServer.cast(___MODULE__, :print_state)
+    GenServer.cast(__MODULE__, :print_state)
   end
 
   @impl true
