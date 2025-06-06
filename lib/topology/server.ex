@@ -10,7 +10,7 @@ defmodule Topology.Server do
   end
 
   def print_state do
-    GenServer.cast(__MODULE__, :print_state)
+    GenServer.call(__MODULE__, :print_state)
   end
 
   @impl true
@@ -31,7 +31,7 @@ defmodule Topology.Server do
   end
 
   @impl true
-  def handle_cast(:print_state, _from, state) do
+  def handle_call(:print_state, _from, state) do
     IO.inspect(state)
     {:noreply, state}
   end
